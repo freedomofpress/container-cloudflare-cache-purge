@@ -1,0 +1,45 @@
+#!/bin/sh
+
+set -e
+
+echo "Will watch for ${K8S_WWW_DEPLOYMENT?} to change in ns ${K8S_WWW_NAMESPACE?}"
+echo "And purge app ${K8S_WWW_APP?}'s URLs: ${CLOUDFLARE_PURGE_URLS:-entire zone}"
+
+deployment_image() {
+    kubectl -n "$K8S_WWW_NAMESPACE" get deployment "$K8S_WWW_DEPLOYMENT" --output=json \
+        | jq -r '.spec.template.spec.containers[].image'
+}
+
+replicaset_images() {
+    kubectl -n "$K8S_WWW_NAMESPACE" get replicaset --output=json \
+        | jq -r ".items[] | select(.metadata.labels.app == \"${K8S_WWW_APP}\" and .spec.replicas > 0) | .spec.template.spec.containers[].image"
+}
+
+new_image="$(deployment_image)"
+attempts=0
+echo "Waiting for ${new_image} to be ready..."
+while test "$(replicaset_images)" != "$new_image"; do
+    attempts="$(($attempts + 1))"
+    echo "Other images are still running (checked ${attempts} times)"
+    sleep 3
+    if test "$attempts" -ge 100; then
+        echo "Timed out waiting for other deployments to stop"
+        exit 1
+    fi
+done
+
+purge() {
+    endpoint="https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONEID?}/purge_cache"
+    echo "Posting to ${endpoint}"
+    curl -X POST "$endpoint" \
+        -H "X-Auth-Email: ${CLOUDFLARE_EMAIL?}" \
+        -H "X-Auth-Key: ${CLOUDFLARE_TOKEN?}" \
+        -H 'Content-Type: application/json' \
+        -d "$*" | jq .
+}
+
+if test -n "$CLOUDFLARE_PURGE_URLS"; then
+    purge '{"purge_everything": true}'
+else
+    purge "$(jq -n --arg urls "$CLOUDFLARE_PURGE_URLS" '{"files": $urls | split(" ")}')"
+fi
