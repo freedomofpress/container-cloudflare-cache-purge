@@ -4,6 +4,8 @@ set -e
 
 echo "Will watch for ${K8S_WWW_DEPLOYMENT?} to change in ns ${K8S_WWW_NAMESPACE?}"
 echo "And purge app ${K8S_WWW_APP?}'s URLs: ${CLOUDFLARE_PURGE_URLS:-entire zone}"
+echo "Current deployments:"
+kubectl -n "$K8S_WWW_NAMESPACE" get deployment
 
 deployment_image() {
     kubectl -n "$K8S_WWW_NAMESPACE" get deployment "$K8S_WWW_DEPLOYMENT" --output=json \
