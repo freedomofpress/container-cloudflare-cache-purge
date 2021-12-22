@@ -2,6 +2,7 @@
 
 set -e
 
+echo "Started at $(date)"
 echo "Will watch for ${K8S_WWW_DEPLOYMENT?} to change in ns ${K8S_WWW_NAMESPACE?}"
 echo "And purge app ${K8S_WWW_APP?}'s URLs: ${CLOUDFLARE_PURGE_URLS:-entire zone}"
 echo "Current deployments:"
@@ -30,9 +31,11 @@ while test "$(replicaset_images)" != "$new_image"; do
     fi
 done
 
+echo "Ready at $(date)"
+echo "Posting to ${endpoint}"
+
 purge() {
     endpoint="https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONEID?}/purge_cache"
-    echo "Posting to ${endpoint}"
     curl -X POST "$endpoint" \
         -H "X-Auth-Email: ${CLOUDFLARE_EMAIL?}" \
         -H "X-Auth-Key: ${CLOUDFLARE_TOKEN?}" \
