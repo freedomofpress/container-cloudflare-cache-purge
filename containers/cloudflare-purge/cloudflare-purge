@@ -35,12 +35,23 @@ echo "Ready at $(date)"
 echo "Posting to ${endpoint}"
 
 purge() {
+    iterations=3
+    wait=30
     endpoint="https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONEID?}/purge_cache"
-    curl -X POST "$endpoint" \
-        -H "X-Auth-Email: ${CLOUDFLARE_EMAIL?}" \
-        -H "X-Auth-Key: ${CLOUDFLARE_TOKEN?}" \
-        -H 'Content-Type: application/json' \
-        -d "$*" | jq .
+    for ((i=1; i<=iterations; i++))
+    do
+        echo "Purging cache, iteration $i..."
+        curl -X POST "$endpoint" \
+            -H "X-Auth-Email: ${CLOUDFLARE_EMAIL?}" \
+            -H "X-Auth-Key: ${CLOUDFLARE_TOKEN?}" \
+            -H 'Content-Type: application/json' \
+            -d "$*" | jq .
+
+        if [ $i -lt $iterations ]; then
+            echo "Sleeping for $wait seconds..."
+            sleep $wait
+        fi
+    done
 }
 
 if test -n "$CLOUDFLARE_PURGE_URLS"; then
