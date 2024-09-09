@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -32,7 +32,6 @@ while test "$(replicaset_images)" != "$new_image"; do
 done
 
 echo "Ready at $(date)"
-echo "Posting to ${endpoint}"
 
 purge() {
     iterations=3
@@ -40,7 +39,7 @@ purge() {
     endpoint="https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONEID?}/purge_cache"
     for ((i=1; i<=iterations; i++))
     do
-        echo "Purging cache, iteration $i..."
+        echo "Purging cache at $endpoint, iteration $i..."
         curl -X POST "$endpoint" \
             -H "X-Auth-Email: ${CLOUDFLARE_EMAIL?}" \
             -H "X-Auth-Key: ${CLOUDFLARE_TOKEN?}" \
