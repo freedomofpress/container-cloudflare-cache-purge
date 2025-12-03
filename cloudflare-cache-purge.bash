@@ -22,7 +22,7 @@ new_image="$(deployment_image)"
 attempts=0
 echo "Waiting for ${new_image} to be ready..."
 while test "$(replicaset_images)" != "$new_image"; do
-    attempts="$(($attempts + 1))"
+    attempts="$((attempts + 1))"
     echo "Other images are still running (checked ${attempts} times)"
     sleep 3
     if test "$attempts" -ge 100; then
