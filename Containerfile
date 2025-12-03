@@ -4,14 +4,13 @@ FROM docker.io/library/alpine:3.14.2@sha256:69704ef328d05a9f806b6b8502915e6a0a4f
 RUN apk update && \
     apk upgrade && \
     apk add --no-cache \
-        bash \
-        curl \
-        jq && \
-    rm -rf /var/cache/apk/*
+        bash=5.1.16-r0 \
+        curl=8.0.1-r0 \
+        jq=1.6-r1
 
 RUN curl -sSLo /usr/local/bin/kubectl https://dl.k8s.io/release/v1.20.2/bin/linux/amd64/kubectl && \
     chmod +x /usr/local/bin/kubectl
 
-COPY cloudflare-purge.bash /usr/local/bin/cloudflare-cache-purge
+COPY cloudflare-cache-purge.bash /usr/local/bin/cloudflare-cache-purge
 
 ENTRYPOINT ["/usr/local/bin/cloudflare-cache-purge"]
