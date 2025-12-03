@@ -1,0 +1,50 @@
+---
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    types: ["opened", "synchronize"]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  lint-actions:
+    name: Lint:Actions
+    uses: freedomofpress/actionslib/.github/workflows/lint-actions.yaml@main
+
+  lint-containerfile:
+    name: Lint:Containerfile
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Run hadolint
+      uses: hadolint/hadolint-action@v3.3.0
+      with:
+        dockerfile: ./Containerfile
+
+  lint-bash:
+    name: Lint:Bash
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Install shellcheck
+      # Taken directly from the documentation:
+      # https://github.com/koalaman/shellcheck/wiki/GitHub-Actions
+      run: |
+        find . -type f -name "*.bash" -exec shellcheck {} +
+
+  test-build:
+    name: Test:Build
+    uses: freedomofpress/actionslib/.github/workflows/oci-build.yaml@main
