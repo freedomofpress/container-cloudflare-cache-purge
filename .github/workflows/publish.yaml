@@ -20,11 +20,8 @@ jobs:
         BRANCH: ${{ github.ref_name }}
         SHA: ${{ github.sha }}
       run: |
-        export TAGS="$BRANCH;$BRANCH-${SHA:0:7}"
-
-        if [ "$BRANCH" = "main" ]; then
-          export TAGS="$TAGS;latest"
-        fi
+        # Extracts the base container image tag out of the containerfile
+        export TAGS=alpine-$(cat Containerfile | grep FROM | cut -d ':' -f 2 | cut -d '@' -f 1)
 
         echo "tags=$TAGS" >>$GITHUB_OUTPUT
     outputs:
@@ -42,4 +39,5 @@ jobs:
     with:
       tags: ${{ needs.prepare.outputs.tags }}
       registry: ghcr.io/freedomofpress/cloudflare-cache-purge
+      add-branch-tags: true
 
